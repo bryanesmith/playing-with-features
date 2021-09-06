@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../lib')
+
 from feast import FeatureStore 
 import pandas as pd
 from datetime import datetime, timedelta
@@ -14,13 +17,6 @@ entity_df = pd.DataFrame(
         "driver_id": [1001] * 4
     }
 )
-
-features = [
-    "driver_trips:average_daily_rides",
-    "driver_trips:maximum_daily_rides",
-    "driver_trips:rating",
-    "driver_trips:rating:trip_completed",
-]
 
 fs = FeatureStore(repo_path="../driven_hyena")
 
