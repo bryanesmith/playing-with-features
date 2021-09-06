@@ -1,11 +1,5 @@
 from feast import FeatureStore 
-
-def announce(s:str):
-    hr="- " * 20
-    print()
-    print(hr)
-    print(s)
-    print(hr)
+from mylib import announce
 
 features = [
     "driver_hourly_stats:conv_rate",

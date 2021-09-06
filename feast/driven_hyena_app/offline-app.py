@@ -1,24 +1,16 @@
 from feast import FeatureStore 
 import pandas as pd
 from datetime import datetime, timedelta
-
-def announce(s:str):
-    hr="- " * 20
-    print()
-    print(hr)
-    print(s)
-    print(hr)
+from mylib import announce
 
 entity_df = pd.DataFrame(
     {
-#        "event_timestamp": [pd.Timestamp(datetime.now(), tz="UTC")],
         "event_timestamp": [
             datetime.now(),
             datetime.now() - timedelta(minutes=11),
             datetime.now() - timedelta(minutes=36),
             datetime.now() - timedelta(minutes=73),
         ],
-
         "driver_id": [1001] * 4
     }
 )
