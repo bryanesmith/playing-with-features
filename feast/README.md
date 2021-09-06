@@ -1,5 +1,6 @@
 # Feast projects
 
-## driven_hyena
+## driven_hyena, driven_hyena_app
 
-Default files.
+Consuming offline, online features from the sample Feast data.
+
