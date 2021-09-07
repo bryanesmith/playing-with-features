@@ -1,0 +1,3 @@
+project: covid_gcp
+registry: data/registry.db
+provider: gcp
