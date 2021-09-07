@@ -1,12 +1,15 @@
 import pandas as pd
 
-csv_file = "/Users/bryan/Developer/playing-with-features/feast/data/us-covid.csv"
-parquet_file = "/Users/bryan/Developer/playing-with-features/feast/data/us-covid.parquet"
+from os.path import dirname, abspath
+d = dirname(dirname(abspath(__file__)))
+
+csv_file = "%s/data/us-covid.csv"%d
+parquet_file = "%s/data/us-covid.parquet"%d
 
 def convert():
     # load CSV
     df = pd.read_csv(csv_file, chunksize=100_000, low_memory=False) \
-      .read() \
+      .read()
 
     # convert date to timestamp
     #print('before', df['date'].head(5))
