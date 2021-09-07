@@ -1,7 +1,7 @@
 import sys
-sys.path.append('../lib')
+sys.path.append('lib')
 
-from feast import FeatureStore 
+from feast import FeatureStore
 import pandas as pd
 from datetime import datetime, timedelta
 from mylib import announce
@@ -12,7 +12,7 @@ entity_df = pd.DataFrame(
             datetime.now(),
             datetime.now()
         ],
-        "state": ['DC', 'VA'] 
+        "state": ['DC', 'VA']
     }
 )
 
@@ -34,4 +34,3 @@ training_df = fs.get_historical_features(
 
 announce('sampling few features:')
 print(training_df.tail(5))
-

@@ -1,7 +1,7 @@
 import sys
-sys.path.append('../lib')
+sys.path.append('lib')
 
-from feast import FeatureStore 
+from feast import FeatureStore
 from mylib import announce
 
 fs = FeatureStore(repo_path="../driven_hyena")
