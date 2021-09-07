@@ -33,7 +33,7 @@ feast init
 To create a new repository with features stores hosted in GCP:
 
 ```
-feast init -type gcp <repo-name>
+feast init -t gcp <repo-name>
 ```
 
 To publish feature changes to feature repository and enable you to use features for offline applications:
