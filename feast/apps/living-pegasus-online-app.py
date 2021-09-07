@@ -9,8 +9,8 @@ fs = FeatureStore(repo_path="../feature-repos/living_pegasus")
 announce('fetching online features')
 online_features = fs.get_online_features(
     features=[
-        'state_daily_stats:death',
-        'state_daily_stats:hospitalized'
+        'living_pegasus:death',
+        'living_pegasus:hospitalized'
     ],
     entity_rows=[
         {"state": "DC"},
