@@ -1,7 +1,7 @@
 from feast import Entity, Feature, FeatureView, FileSource, ValueType
 
 us_covid_stats = FileSource(
-    path="/Users/bryan/Developer/playing-with-features/feast/living_pegasus/data/us-covid.parquet",
+    path="../data/us-covid.parquet",
     event_timestamp_column="date",
     created_timestamp_column=None,
 )
