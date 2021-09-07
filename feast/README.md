@@ -47,3 +47,9 @@ To publish features to online feature store:
 ```
 feast materialize 2019-01-01 2021-09-07
 ```
+
+To publish additional features to online feature store after previously running `materialize` (and feast will smartly start with previous end date):
+
+```
+feast materialize-incremental 2021-09-15 # end date
+```
