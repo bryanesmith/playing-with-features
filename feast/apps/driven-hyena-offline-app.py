@@ -18,7 +18,7 @@ entity_df = pd.DataFrame(
     }
 )
 
-fs = FeatureStore(repo_path="../driven_hyena")
+fs = FeatureStore(repo_path="../feature-repos/driven_hyena")
 
 announce('listing feature views:')
 print(fs.list_feature_views())

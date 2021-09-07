@@ -1,7 +1,12 @@
 from feast import Entity, Feature, FeatureView, FileSource, ValueType
 
+from os.path import dirname, abspath
+d = dirname(dirname(dirname(abspath(__file__))))
+
+csv_file = "%s/data/us-covid.csv"%d
+
 us_covid_stats = FileSource(
-    path="../data/us-covid.parquet",
+    path="%s/data/us-covid.parquet"%d,
     event_timestamp_column="date",
     created_timestamp_column=None,
 )

@@ -16,7 +16,7 @@ entity_df = pd.DataFrame(
     }
 )
 
-fs = FeatureStore(repo_path="../living_pegasus")
+fs = FeatureStore(repo_path="../feature-repos/living_pegasus")
 
 announce('listing feature views:')
 print(fs.list_feature_views())
