@@ -1,8 +1,5 @@
 from feast import BigQuerySource, Entity, Feature, FeatureView, ValueType
 
-from os.path import dirname, abspath
-d = dirname(dirname(dirname(abspath(__file__))))
-
 driver_stats_source = BigQuerySource(
     table_ref="us-covid.daily_summaries.us_states",
     event_timestamp_column="date",
