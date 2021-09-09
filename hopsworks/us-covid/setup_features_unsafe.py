@@ -1,17 +1,8 @@
 import hsfs
-import os
+import mylib
 from os.path import dirname, abspath
 import pandas
 
-# Get environment variables
-for var in ['HSFS_HOST', 'HSFS_PORT', 'HSFS_API_KEY', 'HSFS_PROJECT']:
-    if var not in os.environ:
-        raise EnvironmentError("Must set environment variable: %s"%var)
-
-host = os.environ['HSFS_HOST']
-port = os.environ['HSFS_PORT']
-api_key = os.environ['HSFS_API_KEY']
-project = os.environ['HSFS_PROJECT']
 
 # Load COVID data
 d = dirname(dirname(abspath(__file__)))
@@ -20,15 +11,8 @@ df = pandas.read_parquet('%s/data/us-covid.parquet'%d)
 print('Loaded COVID dataframe: ', df.head(5))
 
 # connect to Hopsworks feature store
-connection = hsfs.connection(
-    host=host,
-    port=port,
-    project=project,
-    api_key_value=api_key,
-    hostname_verification=True
-)
+connection = mylib.connect_using_envvars()
 fs = connection.get_feature_store()
-print(fs)
 
 # Get feature group and upload data
 try:
@@ -49,5 +33,5 @@ fg = fs.create_feature_group('us_covid',
                         online_enabled=True)
 fg.save(df)
 
-# fin, clean up
+# fin
 connection.close()

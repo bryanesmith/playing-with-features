@@ -18,5 +18,10 @@
 
 5. Create the database. **Warning: this will delete us_covid feature group in your project if it exists.**:
     ```
-    python us-covid/unsafe_setup.py
+    python us-covid/setup_features_unsafe.py
+    ```
+
+6. Fetch data from offline and online stores:
+    ```
+    python us-covid/fetch_features.py
     ```
