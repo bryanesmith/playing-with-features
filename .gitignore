@@ -3,3 +3,4 @@ __pycache__
 # ignore common local stores
 *.db
 
+hops/
