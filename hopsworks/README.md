@@ -25,3 +25,11 @@
     ```
     python us-covid/fetch_features.py
     ```
+
+## Challenges
+* Field validation error message when creating feature store not displayed in new UI
+* Had to disable time travel when creating feature group due to error
+* Error messages with jobs obfuscated by RestAPIError
+* Jobs sometimes take very long time to run
+* Error with query running in job that doesn't result in error when running locally
+* Dumps random files in your filesystem, not sure when or why

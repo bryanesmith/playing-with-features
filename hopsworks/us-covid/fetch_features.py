@@ -1,5 +1,5 @@
 import mylib
-from hdfs import Feature
+from hsfs.feature import Feature
 
 #
 # As of 21/9/9, this is untested, as my Hopsworks jobs are stuck in
@@ -13,17 +13,27 @@ fg = fs.get_feature_group('us_covid', 1)
 
 # Read features
 print("Reading up-to-date data from offline store:")
-fg.read().show()
+print(fg.read().head(5))
 
-# Prob won't work, given had to disable time travel due to errors
 DATE="2021-09-09 23:59:59"
 print("Reading offline store data from %s: "%DATE)
-fg.read(DATE).show()
+print(fg.read(DATE).head(5))
 
-print("Reading up-to-date data from online store:")
-fg.read().show(online=True)
+# Online not working
+#print("Reading up-to-date data from online store:")
+#print(fg.read(online=True).head(5))
 
-fg.select_all().filter(Feature("state") == "DC").show()
+print("Retrieving just DC data")
+query = fg.select_all().filter(Feature("state") == "DC")
+query.show(5)
+
+# Generate a dataset for DC data
+#td = fs.create_training_dataset("dc_covid_data",
+#                                version=1,
+#                                data_format="tfrecords",
+#                                description="A test training dataset saved in TfRecords format",
+#                                splits={'train': 0.7, 'test': 0.2, 'validate': 0.1})
+#td.save(query)
 
 # fin
 connection.close()
