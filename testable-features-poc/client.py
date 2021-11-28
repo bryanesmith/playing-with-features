@@ -13,21 +13,34 @@ class FeatureDefinition:
         self.definition = yaml.safe_load(raw_definition)
 
 
+class DataSource:
+    pass
+
+
+class CSVSource(DataSource):
+
+    def __init__(self, data):
+        self.data = data
+
+
 class Connection:
 
     def __init__(self, feature: FeatureDefinition):
         self.feature = feature
         self.gbq_client = bigquery.Client()
 
-    def _build_sources(self, env):
+    def _build_sources(self, env_name):
         srcs = self.feature.definition['sources']
         src_map = {}
 
-        # Convert [ { 'source1': { 'env1': 'src1', 'env2': 'src2' } }, ... ]
-        #   to { 'source1': 'src1, ... } using specified environment
+        # Convert:
+        # [ { name: 'source1', environments: [ {name: 'prod', value: 'foo.bar.baz'}] }, ...]
+        #
+        # to: { 'source1': 'foo.bar.baz', ... } using specified environment
         for src in srcs:
-            for src_key in src:
-                src_map[src_key] = src[src_key][env]
+            matching_env = list(filter(lambda next_env: next_env['name'] == env_name, src['environments']))
+            src_name = src['name']
+            src_map[src_name] = matching_env[0]['value'] if matching_env else None
         return src_map
 
     def _build_query(self, **kwargs):
@@ -35,7 +48,7 @@ class Connection:
         srcs = self._build_sources(os.getenv('ENV'))
         return t.render({**kwargs, **srcs})
 
-    def condition_env(self, env, data):
+    def condition_env(self, env, data_source: DataSource):
 
         # TODO: this shouldn't be hardcoded
         bucket_name = 'testable-features-poc'
@@ -48,7 +61,7 @@ class Connection:
         # Write CSV to temp file
         tmp = tempfile.NamedTemporaryFile(delete=False)
         try:
-            tmp.write(data.strip().encode("UTF-8"))
+            tmp.write(data_source.data.strip().encode("UTF-8"))
         finally:
             tmp.close()
 
@@ -82,7 +95,12 @@ class Connection:
         # TODO: delete file from GCS
 
         # TODO: less hard-coded
-        self.feature.definition['sources'][0]['source1'][env] = tmp_table_name
+        self.feature.definition['sources'][0]['environments'].append({
+            'name': env,
+            'value': tmp_table_name
+        })
+
+        print(self.feature.definition)
 
     def inference(self, **kwargs):
         q = self._build_query(**kwargs)
