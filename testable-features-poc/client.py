@@ -115,6 +115,7 @@ class Connection:
             )
             uri = "gs://{}/{}".format(BUCKET_NAME, blob_name)
 
+            # TODO: make this an ephemeral table (e.g., delete after 1 day)
             load_job = self.gbq_client.load_table_from_uri(
                 uri, tmp_table_name, job_config=job_config
             )
