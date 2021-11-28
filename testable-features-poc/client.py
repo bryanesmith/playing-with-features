@@ -34,6 +34,12 @@ class CSVSource(DataSource):
             tmp.close()
 
 
+class TableSource(DataSource):
+
+    def __init__(self, table_name):
+        self.table_name = table_name
+
+
 class Connection:
 
     def __init__(self, feature: FeatureDefinition):
@@ -78,6 +84,13 @@ class Connection:
         return matching_env[0]['value']
 
 
+    def _set_table_name_for_environment(self, env, source_name, table_name):
+        self._find_src_by_name(source_name)['environments'].append({
+            'name': env,
+            'value': table_name
+        })
+
+
     def _condition_env_csv(self, env, source_name, data_source: CSVSource):
 
         guid = str(uuid.uuid4())
@@ -111,10 +124,7 @@ class Connection:
             destination_table = self.gbq_client.get_table(tmp_table_name)  # Make an API request.
             #print("Loaded {} rows from: {}".format(destination_table.num_rows, tmp_table_name))
 
-            self._find_src_by_name(source_name)['environments'].append({
-                'name': env,
-                'value': tmp_table_name
-            })
+            self._set_table_name_for_environment(env, source_name, tmp_table_name)
 
             # TODO: delete file from GCS
 
@@ -126,6 +136,8 @@ class Connection:
 
         if isinstance(data_source, CSVSource):
             self._condition_env_csv(env, source_name, data_source)
+        elif isinstance(data_source, TableSource):
+            self._set_table_name_for_environment(env, source_name, data_source.table_name)
         else:
             raise Exception("Unrecognized data source type: {}".format(type(data_source)))
 
@@ -136,6 +148,7 @@ class Connection:
         val = next(job.result(), None)
         return val[0] if val else None
 
+
     def close(self):
         print("closed")
 
@@ -145,3 +158,10 @@ class FeaturesClient:
     @classmethod
     def load_feature(cls, feature: FeatureDefinition):
         return Connection(feature)
+
+
+class FeatureRegistry:
+
+    @classmethod
+    def publish(cls, feature: FeatureDefinition):
+        pass
