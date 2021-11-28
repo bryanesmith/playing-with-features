@@ -59,22 +59,30 @@ class Connection:
         srcs = self._build_sources(os.getenv('ENV'))
         return t.render({**kwargs, **srcs})
 
-    def _find_prod_src(self, source_name):
-        matching_env = list(filter(lambda next_src: next_src['name'] == source_name, self.feature.definition['sources']))
-        if not matching_env:
+
+    def _find_src_by_name(self, source_name):
+        matching_src = list(filter(lambda next_src: next_src['name'] == source_name, self.feature.definition['sources']))
+        return matching_src[0] if matching_src else None
+
+
+    def _find_environment_value(self, env, source_name):
+
+        matching_src = self._find_src_by_name(source_name)
+        if not matching_src:
             raise Exception("Unrecognized source: {}".format(source_name))
 
-        matching_env = list(filter(lambda next_env: next_env['name'] == 'prod', matching_env[0]['environments']))
+        matching_env = list(filter(lambda next_env: next_env['name'] == env, matching_src['environments']))
         if not matching_env:
-            raise Exception("Failed to find 'prod' environment for: {}".format(env))
+            raise Exception("Failed to find '{}' environment for: {}".format(env, source_name))
 
         return matching_env[0]['value']
+
 
     def _condition_env_csv(self, env, source_name, data_source: CSVSource):
 
         guid = str(uuid.uuid4())
         blob_name = '{}.csv'.format(guid)
-        prod_src_name = self._find_prod_src(source_name)
+        prod_src_name = self._find_environment_value('prod', source_name)
         tmp_table_name = "{}-{}".format(prod_src_name, guid)
 
         tmp = data_source.write_temp_file()
@@ -103,8 +111,7 @@ class Connection:
             destination_table = self.gbq_client.get_table(tmp_table_name)  # Make an API request.
             #print("Loaded {} rows from: {}".format(destination_table.num_rows, tmp_table_name))
 
-            # TODO: less hard-coded
-            self.feature.definition['sources'][0]['environments'].append({
+            self._find_src_by_name(source_name)['environments'].append({
                 'name': env,
                 'value': tmp_table_name
             })
