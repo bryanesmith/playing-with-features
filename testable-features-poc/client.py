@@ -7,6 +7,9 @@ import uuid
 import yaml
 
 
+BUCKET_NAME = 'testable-features-poc'
+
+
 class FeatureDefinition:
 
     def __init__(self, raw_definition):
@@ -21,6 +24,14 @@ class CSVSource(DataSource):
 
     def __init__(self, data):
         self.data = data
+
+    def write_temp_file(self):
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        try:
+            tmp.write(self.data.strip().encode("UTF-8"))
+            return tmp
+        finally:
+            tmp.close()
 
 
 class Connection:
@@ -48,59 +59,69 @@ class Connection:
         srcs = self._build_sources(os.getenv('ENV'))
         return t.render({**kwargs, **srcs})
 
-    def condition_env(self, env, data_source: DataSource):
+    def _find_prod_src(self, source_name):
+        matching_env = list(filter(lambda next_src: next_src['name'] == source_name, self.feature.definition['sources']))
+        if not matching_env:
+            raise Exception("Unrecognized source: {}".format(source_name))
 
-        # TODO: this shouldn't be hardcoded
-        bucket_name = 'testable-features-poc'
+        matching_env = list(filter(lambda next_env: next_env['name'] == 'prod', matching_env[0]['environments']))
+        if not matching_env:
+            raise Exception("Failed to find 'prod' environment for: {}".format(env))
+
+        return matching_env[0]['value']
+
+    def _condition_env_csv(self, env, source_name, data_source: CSVSource):
+
         guid = str(uuid.uuid4())
         blob_name = '{}.csv'.format(guid)
+        prod_src_name = self._find_prod_src(source_name)
+        tmp_table_name = "{}-{}".format(prod_src_name, guid)
 
-        # TODO: pull this from self.feature.definition.sources
-        tmp_table_name = "testable-features-poc.covid.us-states-{}".format(guid)
-
-        # Write CSV to temp file
-        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmp = data_source.write_temp_file()
         try:
-            tmp.write(data_source.data.strip().encode("UTF-8"))
+            # Put the CSV in GCS
+            storage_client = storage.Client()
+
+            bucket = storage_client.bucket(BUCKET_NAME)
+            blob = bucket.blob(blob_name)
+
+            blob.upload_from_filename(tmp.name)
+
+            # Import data from GCS
+            job_config = bigquery.LoadJobConfig(
+                autodetect=True,
+                source_format=bigquery.SourceFormat.CSV
+            )
+            uri = "gs://{}/{}".format(BUCKET_NAME, blob_name)
+
+            load_job = self.gbq_client.load_table_from_uri(
+                uri, tmp_table_name, job_config=job_config
+            )
+
+            load_job.result()  # Waits for the job to complete.
+
+            destination_table = self.gbq_client.get_table(tmp_table_name)  # Make an API request.
+            #print("Loaded {} rows from: {}".format(destination_table.num_rows, tmp_table_name))
+
+            # TODO: less hard-coded
+            self.feature.definition['sources'][0]['environments'].append({
+                'name': env,
+                'value': tmp_table_name
+            })
+
+            # TODO: delete file from GCS
+
         finally:
-            tmp.close()
+            os.unlink(tmp.name)
 
-        # Put the CSV in GCS
-        storage_client = storage.Client()
 
-        bucket = storage_client.bucket(bucket_name)
-        blob = bucket.blob(blob_name)
+    def condition_env(self, env, source_name, data_source: DataSource):
 
-        blob.upload_from_filename(tmp.name)
+        if isinstance(data_source, CSVSource):
+            self._condition_env_csv(env, source_name, data_source)
+        else:
+            raise Exception("Unrecognized data source type: {}".format(type(data_source)))
 
-        # Import data from GCS
-        job_config = bigquery.LoadJobConfig(
-            autodetect=True,
-            source_format=bigquery.SourceFormat.CSV
-        )
-        uri = "gs://{}/{}".format(bucket_name, blob_name)
-
-        load_job = self.gbq_client.load_table_from_uri(
-            uri, tmp_table_name, job_config=job_config
-        )  # Make an API request.
-
-        load_job.result()  # Waits for the job to complete.
-
-        destination_table = self.gbq_client.get_table(tmp_table_name)  # Make an API request.
-        #print("Loaded {} rows from: {}".format(destination_table.num_rows, tmp_table_name))
-
-        # TODO: needs to be in a finally block
-        os.unlink(tmp.name)
-
-        # TODO: delete file from GCS
-
-        # TODO: less hard-coded
-        self.feature.definition['sources'][0]['environments'].append({
-            'name': env,
-            'value': tmp_table_name
-        })
-
-        print(self.feature.definition)
 
     def inference(self, **kwargs):
         q = self._build_query(**kwargs)
